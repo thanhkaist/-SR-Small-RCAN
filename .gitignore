@@ -1,0 +1,5 @@
+.idea
+*.zip
+SR_data
+__pycache__
+
