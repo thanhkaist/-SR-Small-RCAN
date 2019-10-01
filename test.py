@@ -36,11 +36,11 @@ parser.add_argument('--valBatchSize', type=int, default=5)
 parser.add_argument('--pretrained_model', default='result/Net1/model/model_lastest.pt', help='save result')
 
 
-parser.add_argument('--nRG', type=int, default=0, help='number of RG block')
-parser.add_argument('--nRCAB', type=int, default=0, help='number of RCAB block')
-parser.add_argument('--nFeat', type=int, default=0, help='number of feature maps')
-parser.add_argument('--nChannel', type=int, default=0, help='number of color channels to use')
-parser.add_argument('--patchSize', type=int, default=0, help='patch size')
+parser.add_argument('--nRG', type=int, default=3, help='number of RG block')
+parser.add_argument('--nRCAB', type=int, default=2, help='number of RCAB block')
+parser.add_argument('--nFeat', type=int, default=64, help='number of feature maps')
+parser.add_argument('--nChannel', type=int, default=3, help='number of color channels to use')
+parser.add_argument('--patchSize', type=int, default=64, help='patch size')
 
 parser.add_argument('--nThreads', type=int, default=8, help='number of threads for data loading')
 
@@ -100,8 +100,9 @@ def test(args):
         output = output.numpy()
         output *= 255.0
         output = output.clip(0, 255)
-
-        out = Image.fromarray(np.uint8(output[0]), mode='RGB')  # output of SRCNN
+        # import pdb; pdb.set_trace()
+        # Convert to W*H*3 and BGR to RGB
+        out = Image.fromarray(np.uint8(output.transpose([1,2,0])[...,::-1]),mode='RGB')  # output of SRCNN
         out.save('result/Net1/SR_img_%03d.png' % (count))
 
         # =========== Target Image ===============
@@ -123,7 +124,7 @@ def test(args):
         print(str(count) + '_img PSNR: ' + str(psnr_val))
         avg_psnr += psnr
 
-    print('AVG PSNR : ' + str(avg_psnr))
+    print('AVG PSNR : ' + str(avg_psnr/5))
 
 
 if __name__ == '__main__':
