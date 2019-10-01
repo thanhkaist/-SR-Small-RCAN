@@ -39,17 +39,17 @@ parser.add_argument('--model_name', default='Net1', help='model to select')
 parser.add_argument('--finetuning', default=False, help='finetuning the training')
 parser.add_argument('--need_patch', default=True, help='get patch form image')
 
-parser.add_argument('--nRG', type=int, default=0, help='number of RG block')
-parser.add_argument('--nRCAB', type=int, default=0, help='number of RCAB block')
-parser.add_argument('--nFeat', type=int, default=0, help='number of feature maps')
-parser.add_argument('--nChannel', type=int, default=0, help='number of color channels to use')
-parser.add_argument('--patchSize', type=int, default=0, help='patch size')
+parser.add_argument('--nRG', type=int, default=3, help='number of RG block')
+parser.add_argument('--nRCAB', type=int, default=2, help='number of RCAB block')
+parser.add_argument('--nFeat', type=int, default=64, help='number of feature maps')
+parser.add_argument('--nChannel', type=int, default=3, help='number of color channels to use')
+parser.add_argument('--patchSize', type=int, default=64, help='patch size')
 
 parser.add_argument('--nThreads', type=int, default=8, help='number of threads for data loading')
-parser.add_argument('--batchSize', type=int, default=16, help='input batch size for training')
+parser.add_argument('--batchSize', type=int, default=64, help='input batch size for training')
 parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
 parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train')
-parser.add_argument('--lrDecay', type=int, default=100, help='epoch of half lr')
+parser.add_argument('--lrDecay', type=int, default=70, help='epoch of half lr')
 parser.add_argument('--decayType', default='inv', help='lr decay function')
 parser.add_argument('--lossType', default='L1', help='Loss type')
 
@@ -75,7 +75,7 @@ def weights_init(m):
 def get_dataset(args):
     data_train = DIV2K(args)
     dataloader = torch.utils.data.DataLoader(data_train, batch_size=args.batchSize,
-                                             drop_last=True, shuffle=True, num_workers=int(args.nThreads), pin_memory=False)
+                                             drop_last=True, shuffle=True, num_workers=int(args.nThreads), pin_memory=True)
     return dataloader
 
 def get_testdataset(args):
@@ -163,6 +163,7 @@ def train(args):
 
     # Set a Model
     my_model = model.Net1(args)
+    print(my_model)
     my_model.apply(weights_init)
     my_model.cuda()
 
@@ -185,10 +186,12 @@ def train(args):
     lossfunction.cuda()
     total_loss = 0
     total_time = 0
+    optimizer = optim.Adam(my_model.parameters(),lr=args.lr)  # optimizer
+
     for epoch in range(start_epoch, args.epochs):
         start = time.time()
-        optimizer = optim.Adam(my_model.parameters()) # optimizer
         learning_rate = set_lr(args, epoch, optimizer)
+        # learning_rate = args.lr
         total_loss_ = 0
         loss_ = 0
         for batch, (im_lr, im_hr) in enumerate(dataloader):
