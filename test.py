@@ -24,6 +24,8 @@ from utils import *
 import time
 from scipy import io
 from PIL import Image
+from skimage.measure import compare_ssim as ssim
+import scipy
 
 
 parser = argparse.ArgumentParser(description='Super Resolution')
@@ -69,6 +71,18 @@ def get_testdataset(args):
     return dataloader
 
 
+def ssim_from_sci(path_img1, path_img2, padding=4):
+    img1 = scipy.misc.imread(path_img1, mode='YCbCr')
+    img2 = scipy.misc.imread(path_img2, mode='YCbCr')
+    # get channel Y
+    img1 = img1[:, :, 0]
+    img2 = img2[:, :, 0]
+    # padding
+    img1 = img1[padding: -padding, padding:-padding]
+    img2 = img2[padding: -padding, padding:-padding]
+    ss = ssim(img1, img2)
+
+
 def test(args):
 
     # SR network
@@ -82,6 +96,7 @@ def test(args):
     my_model.eval()
 
     avg_psnr = 0
+    avg_ssim = 0
     count = 0
     for batch, (im_lr, im_hr) in enumerate(testdataloader):
         count = count + 1
@@ -121,10 +136,14 @@ def test(args):
         mse = ((im_hr[:, 8:-8,8:-8] - output[:, 8:-8,8:-8]) ** 2).mean()
         psnr = 10 * log10(255 * 255 / (mse + 10 ** (-10)))
         psnr_val = psnr
-        print(str(count) + '_img PSNR: ' + str(psnr_val))
+
+        # calculate multichannel ssimd
+        ssim_val = ssim(im_hr[:, 8:-8,8:-8].transpose(1,2,0),output[:, 8:-8,8:-8].transpose([1,2,0]),multichannel=True)
+        print( '%d_img PSNR/SSIM: %.4f/%.4f '%(count,psnr_val,ssim_val))
+        avg_ssim += ssim_val
         avg_psnr += psnr
 
-    print('AVG PSNR : ' + str(avg_psnr/5))
+    print('AVG PSNR/AVG SSIM : %.4f/%.4f '%(avg_psnr/5,avg_ssim / 5))
 
 
 if __name__ == '__main__':
