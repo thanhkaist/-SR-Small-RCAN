@@ -46,7 +46,7 @@ parser.add_argument('--nChannel', type=int, default=3, help='number of color cha
 parser.add_argument('--patchSize', type=int, default=64, help='patch size')
 
 parser.add_argument('--nThreads', type=int, default=8, help='number of threads for data loading')
-parser.add_argument('--batchSize', type=int, default=64, help='input batch size for training')
+parser.add_argument('--batchSize', type=int, default=16, help='input batch size for training')
 parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
 parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train')
 parser.add_argument('--lrDecay', type=int, default=70, help='epoch of half lr')
@@ -163,7 +163,7 @@ def train(args):
 
     # Set a Model
     my_model = model.Net1(args)
-    print(my_model)
+    # print(my_model)
     my_model.apply(weights_init)
     my_model.cuda()
 
