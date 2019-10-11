@@ -26,6 +26,7 @@ from scipy import io
 from PIL import Image
 from skimage.measure import compare_ssim as ssim
 import scipy
+import scipy.misc
 
 
 parser = argparse.ArgumentParser(description='Super Resolution')
@@ -71,16 +72,22 @@ def get_testdataset(args):
     return dataloader
 
 
-def ssim_from_sci(path_img1, path_img2, padding=4):
-    img1 = scipy.misc.imread(path_img1, mode='YCbCr')
-    img2 = scipy.misc.imread(path_img2, mode='YCbCr')
+def ssim_from_sci(img1, img2, padding=4):
+    img1 = Image.fromarray(np.uint8(img1) ,mode='RGB')
+    img1 = img1.convert('YCbCr')
+    img1 = np.ndarray((img1.size[1], img1.size[0], 3), 'u1', img1.tobytes())
+    img2 = Image.fromarray(np.uint8(img2) ,mode='RGB')
+    img2 = img2.convert('YCbCr')
+    img2 = np.ndarray((img2.size[1], img2.size[0], 3), 'u1', img2.tobytes())
     # get channel Y
     img1 = img1[:, :, 0]
     img2 = img2[:, :, 0]
     # padding
+    # import pdb; pdb.set_trace()
     img1 = img1[padding: -padding, padding:-padding]
     img2 = img2[padding: -padding, padding:-padding]
     ss = ssim(img1, img2)
+    return ss 
 
 
 def test(args):
@@ -138,7 +145,8 @@ def test(args):
         psnr_val = psnr
 
         # calculate multichannel ssimd
-        ssim_val = ssim(im_hr[:, 8:-8,8:-8].transpose(1,2,0),output[:, 8:-8,8:-8].transpose([1,2,0]),multichannel=True)
+        # ssim_val = ssim(im_hr[:, 8:-8,8:-8].transpose(1,2,0),output[:, 8:-8,8:-8].transpose([1,2,0]),multichannel=True)
+        ssim_val = ssim_from_sci(im_hr[:, 8:-8,8:-8].transpose(1,2,0)[...,::-1],output[:, 8:-8,8:-8].transpose([1,2,0])[...,::-1])
         print( '%d_img PSNR/SSIM: %.4f/%.4f '%(count,psnr_val,ssim_val))
         avg_ssim += ssim_val
         avg_psnr += psnr
